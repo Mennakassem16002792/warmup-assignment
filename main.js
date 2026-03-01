@@ -85,7 +85,7 @@ function addShiftRecord(textFile, shiftObj) {
   const id = shiftObj.driverID.trim();
   const date = shiftObj.date.trim();
 
-  // duplicate check (same driverID + date)
+  // duplicate check
   for (const line of lines) {
     const cols = line.split(",");
     const lineID = cols[0].trim();
@@ -124,8 +124,8 @@ function addShiftRecord(textFile, shiftObj) {
     newObj.hasBonus
   ].join(",");
 
-  // insert after last record of same driverID, otherwise append
   let lastIndex = -1;
+
   for (let i = 0; i < lines.length; i++) {
     const lineID = lines[i].split(",")[0].trim();
     if (lineID === id) lastIndex = i;
@@ -135,7 +135,9 @@ function addShiftRecord(textFile, shiftObj) {
   else lines.splice(lastIndex + 1, 0, newLine);
 
   fs.writeFileSync(textFile, lines.join("\n") + "\n", "utf8");
+
   return newObj;
+}
 }// ============================================================
 // Function 6–10 (stubs for now)
 // ============================================================
