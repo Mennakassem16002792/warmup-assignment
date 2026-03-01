@@ -85,21 +85,18 @@ function addShiftRecord(textFile, shiftObj) {
   const id = shiftObj.driverID.trim();
   const date = shiftObj.date.trim();
 
-  // 1️⃣ Check duplicate (same driverID + date)
+  // duplicate check (same driverID + date)
   for (const line of lines) {
     const cols = line.split(",");
     const lineID = cols[0].trim();
     const lineDate = cols[2].trim();
-    if (lineID === id && lineDate === date) {
-      return {};
-    }
+    if (lineID === id && lineDate === date) return {};
   }
 
-  // 2️⃣ Compute time values
   const shiftDuration = getShiftDuration(shiftObj.startTime, shiftObj.endTime);
   const idleTime = getIdleTime(shiftObj.startTime, shiftObj.endTime);
   const activeTime = getActiveTime(shiftDuration, idleTime);
-  const met = metQuota(date, activeTime);
+  const quotaMet = metQuota(date, activeTime);
 
   const newObj = {
     driverID: shiftObj.driverID,
@@ -110,7 +107,7 @@ function addShiftRecord(textFile, shiftObj) {
     shiftDuration,
     idleTime,
     activeTime,
-    metQuota: met,
+    metQuota: quotaMet,
     hasBonus: false
   };
 
@@ -127,26 +124,19 @@ function addShiftRecord(textFile, shiftObj) {
     newObj.hasBonus
   ].join(",");
 
-  // 3️⃣ Insert after last record of same driverID
+  // insert after last record of same driverID, otherwise append
   let lastIndex = -1;
-
   for (let i = 0; i < lines.length; i++) {
     const lineID = lines[i].split(",")[0].trim();
     if (lineID === id) lastIndex = i;
   }
 
-  if (lastIndex === -1) {
-    lines.push(newLine);
-  } else {
-    lines.splice(lastIndex + 1, 0, newLine);
-  }
+  if (lastIndex === -1) lines.push(newLine);
+  else lines.splice(lastIndex + 1, 0, newLine);
 
   fs.writeFileSync(textFile, lines.join("\n") + "\n", "utf8");
-
   return newObj;
-}
-
-// ============================================================
+}// ============================================================
 // Function 6–10 (stubs for now)
 // ============================================================
 function setBonus(textFile, driverID, date, newValue) {}
