@@ -1,5 +1,6 @@
 const fs = require("fs");
 
+// ---------- Helpers ----------
 function time12hToSeconds(t) {
   t = t.trim().toLowerCase();
   const [clock, period] = t.split(/\s+/);
@@ -25,7 +26,7 @@ function secondsToHms(total) {
 }
 
 // ============================================================
-// Function 1
+// Function 1: getShiftDuration(startTime, endTime)
 // ============================================================
 function getShiftDuration(startTime, endTime) {
   const start = time12hToSeconds(startTime);
@@ -34,27 +35,24 @@ function getShiftDuration(startTime, endTime) {
 }
 
 // ============================================================
-// Function 2
-// Delivery hours: 8:00 AM to 10:00 PM (inclusive)
-// Idle = time before 8:00 AM + time after 10:00 PM
+// Function 2: getIdleTime(startTime, endTime)
 // ============================================================
 function getIdleTime(startTime, endTime) {
   const start = time12hToSeconds(startTime);
   const end = time12hToSeconds(endTime);
 
-  const deliveryStart = 8 * 3600;  // 08:00:00
-  const deliveryEnd = 22 * 3600;   // 22:00:00
+  const deliveryStart = 8 * 3600;
+  const deliveryEnd = 22 * 3600;
 
   let idle = 0;
-
-  if (start < deliveryStart) idle += (Math.min(end, deliveryStart) - start);
-  if (end > deliveryEnd) idle += (end - Math.max(start, deliveryEnd));
+  if (start < deliveryStart) idle += Math.min(end, deliveryStart) - start;
+  if (end > deliveryEnd) idle += end - Math.max(start, deliveryEnd);
 
   return secondsToHms(idle);
 }
 
 // ============================================================
-// Function 3
+// Function 3: getActiveTime(shiftDuration, idleTime)
 // ============================================================
 function getActiveTime(shiftDuration, idleTime) {
   const shift = hmsToSeconds(shiftDuration);
@@ -63,9 +61,7 @@ function getActiveTime(shiftDuration, idleTime) {
 }
 
 // ============================================================
-// Function 4
-// Normal quota: 8:24:00
-// Eid quota (Apr 10–30, 2025): 6:00:00
+// Function 4: metQuota(date, activeTime)
 // ============================================================
 function metQuota(date, activeTime) {
   const active = hmsToSeconds(activeTime);
@@ -80,15 +76,78 @@ function metQuota(date, activeTime) {
 }
 
 // ============================================================
-// Function 5 (TEMP so tests don't crash yet)
-// Replace later with full implementation.
+// Function 5: addShiftRecord(textFile, shiftObj)
 // ============================================================
 function addShiftRecord(textFile, shiftObj) {
-  return {};
+  const content = fs.readFileSync(textFile, "utf8").trim();
+  const lines = content ? content.split("\n") : [];
+
+  const id = shiftObj.driverID.trim();
+  const date = shiftObj.date.trim();
+
+  // 1️⃣ Check duplicate (same driverID + date)
+  for (const line of lines) {
+    const cols = line.split(",");
+    const lineID = cols[0].trim();
+    const lineDate = cols[2].trim();
+    if (lineID === id && lineDate === date) {
+      return {};
+    }
+  }
+
+  // 2️⃣ Compute time values
+  const shiftDuration = getShiftDuration(shiftObj.startTime, shiftObj.endTime);
+  const idleTime = getIdleTime(shiftObj.startTime, shiftObj.endTime);
+  const activeTime = getActiveTime(shiftDuration, idleTime);
+  const met = metQuota(date, activeTime);
+
+  const newObj = {
+    driverID: shiftObj.driverID,
+    driverName: shiftObj.driverName,
+    date: shiftObj.date,
+    startTime: shiftObj.startTime,
+    endTime: shiftObj.endTime,
+    shiftDuration,
+    idleTime,
+    activeTime,
+    metQuota: met,
+    hasBonus: false
+  };
+
+  const newLine = [
+    newObj.driverID,
+    newObj.driverName,
+    newObj.date,
+    newObj.startTime,
+    newObj.endTime,
+    newObj.shiftDuration,
+    newObj.idleTime,
+    newObj.activeTime,
+    newObj.metQuota,
+    newObj.hasBonus
+  ].join(",");
+
+  // 3️⃣ Insert after last record of same driverID
+  let lastIndex = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const lineID = lines[i].split(",")[0].trim();
+    if (lineID === id) lastIndex = i;
+  }
+
+  if (lastIndex === -1) {
+    lines.push(newLine);
+  } else {
+    lines.splice(lastIndex + 1, 0, newLine);
+  }
+
+  fs.writeFileSync(textFile, lines.join("\n") + "\n", "utf8");
+
+  return newObj;
 }
 
 // ============================================================
-// Function 6–10 (leave TODO for now)
+// Function 6–10 (stubs for now)
 // ============================================================
 function setBonus(textFile, driverID, date, newValue) {}
 function countBonusPerMonth(textFile, driverID, month) {}
