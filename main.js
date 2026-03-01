@@ -210,13 +210,58 @@ function getTotalActiveHoursPerMonth(textFile, driverID, month) {
   return secondsToHms(totalSeconds);
 }
 
-// We’ll do these next (need driverRates format)
 function getRequiredHoursPerMonth(textFile, rateFile, bonusCount, driverID, month) {
-  return undefined;
+  const rates = fs.readFileSync(rateFile, "utf8").trim().split("\n");
+
+  let tier = null;
+  for (const line of rates) {
+    const [id, dayOff, basePay, t] = line.split(",").map(x => x.trim());
+    if (id === driverID) {
+      tier = Number(t);
+      break;
+    }
+  }
+
+  if (tier === null) return undefined;
+
+  const baseRequiredSeconds = (16 * 3600 + 48 * 60) + (tier - 1) * (12 * 3600);
+  const requiredSeconds = Math.max(0, baseRequiredSeconds - Number(bonusCount) * (2 * 3600));
+
+  return secondsToHms(requiredSeconds);
 }
 
 function getNetPay(driverID, actualHours, requiredHours, rateFile) {
-  return undefined;
+  const rates = fs.readFileSync(rateFile, "utf8").trim().split("\n");
+
+  let basePay = null;
+  let tier = null;
+
+  for (const line of rates) {
+    const [id, dayOff, pay, t] = line.split(",").map(x => x.trim());
+    if (id === driverID) {
+      basePay = Number(pay);
+      tier = Number(t);
+      break;
+    }
+  }
+
+  if (basePay === null || tier === null) return undefined;
+
+  const actualSec = hmsToSeconds(actualHours);
+  const requiredSec = hmsToSeconds(requiredHours);
+
+  if (actualSec >= requiredSec) return basePay;
+
+  const deficitSec = requiredSec - actualSec;
+  const deficitHoursRoundedUp = Math.ceil(deficitSec / 3600);
+
+  const allowedMissingHours = tier - 1;
+  const hoursToDeduct = Math.max(0, deficitHoursRoundedUp - allowedMissingHours);
+
+  const deductionPerHour = Math.floor(basePay / 185);
+  const net = basePay - hoursToDeduct * deductionPerHour;
+
+  return net;
 }
 module.exports = {
   getShiftDuration,
