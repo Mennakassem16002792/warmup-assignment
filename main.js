@@ -6,8 +6,45 @@ const fs = require("fs");
 // endTime: (typeof string) formatted as hh:mm:ss am or hh:mm:ss pm
 // Returns: string formatted as h:mm:ss
 // ============================================================
+function timeToSeconds(timeStr) {
+    timeStr = timeStr.trim();   // remove spaces
+    
+    let parts = timeStr.split(" ");
+    let time = parts[0];        // hh:mm:ss
+    let period = parts[1];      // am or pm
+    
+    let [hours, minutes, seconds] = time.split(":").map(Number);
+    
+    if (period === "pm" && hours !== 12) {
+        hours += 12;
+    }
+    if (period === "am" && hours === 12) {
+        hours = 0;
+    }
+    
+    return hours * 3600 + minutes * 60 + seconds;
+}
+function secondsToTime(totalSeconds) {
+    let hours = Math.floor(totalSeconds / 3600);
+    let remaining = totalSeconds % 3600;
+    
+    let minutes = Math.floor(remaining / 60);
+    let seconds = remaining % 60;
+    
+    minutes = String(minutes).padStart(2, '0');
+    seconds = String(seconds).padStart(2, '0');
+    
+    return `${hours}:${minutes}:${seconds}`;
+}
 function getShiftDuration(startTime, endTime) {
-    // TODO: Implement this function
+    let startSeconds = timeToSeconds(startTime);
+    let endSeconds = timeToSeconds(endTime);
+    
+    let difference = endSeconds - startSeconds;
+    
+    return secondsToTime(difference);
+}
+// TODO: Implement this function
 }
 
 // ============================================================
