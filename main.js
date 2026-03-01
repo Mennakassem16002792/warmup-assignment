@@ -63,8 +63,7 @@ function getShiftDuration(startTime, endTime) {
     const end = timeToSeconds12h(endTime);
     return secondsToHms(end - start);
 }
-// TODO: Implement this function
-}
+
 
 // ============================================================
 // Function 2: getIdleTime(startTime, endTime)
