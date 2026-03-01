@@ -85,7 +85,6 @@ function addShiftRecord(textFile, shiftObj) {
   const id = shiftObj.driverID.trim();
   const date = shiftObj.date.trim();
 
-  // duplicate check (same driverID + date)
   for (const line of lines) {
     const cols = line.split(",");
     const lineID = cols[0].trim();
@@ -93,12 +92,15 @@ function addShiftRecord(textFile, shiftObj) {
     if (lineID === id && lineDate === date) return {};
   }
 
-  const shiftDuration = getShiftDuration(shiftObj.startTime, shiftObj.endTime);
-  const idleTime = getIdleTime(shiftObj.startTime, shiftObj.endTime);
+  const start = shiftObj.startTime;
+  const end = shiftObj.endTime;
+
+  const shiftDuration = getShiftDuration(start, end);
+  const idleTime = getIdleTime(start, end);
   const activeTime = getActiveTime(shiftDuration, idleTime);
   const quotaMet = metQuota(date, activeTime);
 
-  const newObj = {
+  const result = {
     driverID: shiftObj.driverID,
     driverName: shiftObj.driverName,
     date: shiftObj.date,
@@ -112,16 +114,16 @@ function addShiftRecord(textFile, shiftObj) {
   };
 
   const newLine = [
-    newObj.driverID,
-    newObj.driverName,
-    newObj.date,
-    newObj.startTime,
-    newObj.endTime,
-    newObj.shiftDuration,
-    newObj.idleTime,
-    newObj.activeTime,
-    newObj.metQuota,
-    newObj.hasBonus
+    result.driverID,
+    result.driverName,
+    result.date,
+    result.startTime,
+    result.endTime,
+    result.shiftDuration,
+    result.idleTime,
+    result.activeTime,
+    result.metQuota,
+    result.hasBonus
   ].join(",");
 
   let lastIndex = -1;
@@ -134,9 +136,8 @@ function addShiftRecord(textFile, shiftObj) {
   else lines.splice(lastIndex + 1, 0, newLine);
 
   fs.writeFileSync(textFile, lines.join("\n") + "\n", "utf8");
-  return newObj;
+  return result;
 }
-
 // ============================================================
 // Function 6–10 (stubs for now)
 // ============================================================
