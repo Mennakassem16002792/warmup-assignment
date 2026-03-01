@@ -1,6 +1,22 @@
 const fs = require("fs");
+function time12hToSeconds(t) {
+  t = t.trim().toLowerCase();
+  const [clock, period] = t.split(/\s+/);
+  let [h, m, s] = clock.split(":").map(Number);
 
-// ============================================================
+  if (period === "pm" && h !== 12) h += 12;
+  if (period === "am" && h === 12) h = 0;
+
+  return h * 3600 + m * 60 + s;
+}
+
+function secondsToHms(total) {
+  const h = Math.floor(total / 3600);
+  const rem = total % 3600;
+  const m = Math.floor(rem / 60);
+  const s = rem % 60;
+  return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}// ============================================================
 // Function 1: getShiftDuration(startTime, endTime)
 // startTime: (typeof string) formatted as hh:mm:ss am or hh:mm:ss pm
 // endTime: (typeof string) formatted as hh:mm:ss am or hh:mm:ss pm
@@ -59,9 +75,9 @@ function secondsToHms(total) {
 }
 
 function getShiftDuration(startTime, endTime) {
-    const start = timeToSeconds12h(startTime);
-    const end = timeToSeconds12h(endTime);
-    return secondsToHms(end - start);
+  const start = time12hToSeconds(startTime);
+  const end = time12hToSeconds(endTime);
+  return secondsToHms(end - start);
 }
 
 
