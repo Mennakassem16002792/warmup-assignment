@@ -36,13 +36,32 @@ function secondsToTime(totalSeconds) {
     
     return `${hours}:${minutes}:${seconds}`;
 }
+function timeToSeconds12h(t) {
+    t = t.trim().toLowerCase();
+    const [clock, period] = t.split(/\s+/);
+    let [h, m, s] = clock.split(":").map(Number);
+
+    if (period === "pm" && h !== 12) h += 12;
+    if (period === "am" && h === 12) h = 0;
+
+    return h * 3600 + m * 60 + s;
+}
+
+function secondsToHms(total) {
+    const h = Math.floor(total / 3600);
+    const rem = total % 3600;
+    const m = Math.floor(rem / 60);
+    const s = rem % 60;
+
+    const mm = String(m).padStart(2, "0");
+    const ss = String(s).padStart(2, "0");
+    return `${h}:${mm}:${ss}`;
+}
+
 function getShiftDuration(startTime, endTime) {
-    let startSeconds = timeToSeconds(startTime);
-    let endSeconds = timeToSeconds(endTime);
-    
-    let difference = endSeconds - startSeconds;
-    
-    return secondsToTime(difference);
+    const start = timeToSeconds12h(startTime);
+    const end = timeToSeconds12h(endTime);
+    return secondsToHms(end - start);
 }
 // TODO: Implement this function
 }
