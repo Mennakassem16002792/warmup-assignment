@@ -13,10 +13,10 @@ function time12hToSeconds(t) {
 
 function hmsToSeconds(hms) {
   const [h, m, s] = hms.trim().split(":").map(Number);
-  return h * 3600 + m * 60 + s;
+  return h * 3600 + m * 60 + s ;
 }
 
-function secondsToHms(total) {
+function secondsToHms(total){ 
   const h = Math.floor(total / 3600);
   const rem = total % 3600;
   const m = Math.floor(rem / 60);
@@ -24,7 +24,7 @@ function secondsToHms(total) {
   return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-function getShiftDuration(startTime, endTime) {
+function getShiftDuration(startTime, endTime){
   const start = time12hToSeconds(startTime);
   const end = time12hToSeconds(endTime);
   return secondsToHms(end - start);
